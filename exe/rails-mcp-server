@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+
+require "pathname"
+
+# Get script directory and project root
+bin_dir = Pathname.new(__FILE__).dirname
+root_dir = bin_dir.parent
+
+# Check if server script exists
+server_script = root_dir.join("lib", "rails_mcp_server.rb")
+unless server_script.exist?
+  puts "Error: rails_mcp_server.rb not found in lib directory (#{root_dir}/lib)"
+  exit 1
+end
+
+# Show version if requested
+if ARGV[0] == "version"
+  puts "Rails MCP Server version 1.0.0"
+  exit 0
+end
+
+# Help message
+if ARGV[0] == "--help" || ARGV[0] == "-h"
+  puts "Rails MCP Server - MCP protocol server for Rails projects"
+  puts ""
+  puts "Usage: #{File.basename($0)} [options]"
+  puts ""
+  puts "Options:"
+  puts "  --log-level LEVEL      Log level: debug, info, warn, error (default: info)"
+  puts "  version                Display version information"
+  puts "  --help, -h             Display this help message"
+  puts ""
+  puts "Example:"
+  puts "  #{File.basename($0)} --log-level debug"
+  exit 0
+end
+
+# Change to root directory and execute server script
+Dir.chdir(root_dir)
+load server_script

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rails-mcp-server (1.0.0)
+    rails-mcp-server (1.0.1)
       logger
       mcp-rb
 

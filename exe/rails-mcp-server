@@ -1,21 +1,17 @@
 #!/usr/bin/env ruby
 
-require "pathname"
+require "bundler/setup"
 
-# Get script directory and project root
-bin_dir = Pathname.new(__FILE__).dirname
-root_dir = bin_dir.parent
+require "fast_mcp"
+require "rack"
+require "rack/handler/puma"
+require "puma"
+require "puma/configuration"
+require "puma/launcher"
+require_relative "../lib/rails_mcp_server"
 
-# Check if server script exists
-server_script = root_dir.join("lib", "rails_mcp_server.rb")
-unless server_script.exist?
-  puts "Error: rails_mcp_server.rb not found in lib directory (#{root_dir}/lib)"
-  exit 1
-end
-
-# Show version if requested
 if ARGV[0] == "version"
-  puts "Rails MCP Server version 1.0.0"
+  puts "Rails MCP Server version #{RailsMcpServer::VERSION}"
   exit 0
 end
 
@@ -27,14 +23,90 @@ if ARGV[0] == "--help" || ARGV[0] == "-h"
   puts ""
   puts "Options:"
   puts "  --log-level LEVEL      Log level: debug, info, warn, error (default: info)"
+  puts "  --mode MODE            Server mode: http or stdio (default: stdio)"
+  puts "  -p, --port PORT        Port to listen on (default: 6029)"
   puts "  version                Display version information"
   puts "  --help, -h             Display this help message"
   puts ""
   puts "Example:"
-  puts "  #{File.basename($0)} --log-level debug"
+  puts "  #{File.basename($0)} --log-level debug -p 6060"
+  puts "  #{File.basename($0)} --mode stdio"
   exit 0
 end
 
-# Change to root directory and execute server script
-Dir.chdir(root_dir)
-load server_script
+# Default values
+port = 6029
+mode = "stdio"
+
+# Parse command-line arguments
+i = 0
+while i < ARGV.length
+  case ARGV[i]
+  when "--log-level"
+    log_level = ARGV[i + 1].to_sym
+    i += 2
+  when "-p", "--port"
+    port = ARGV[i + 1].to_i
+    i += 2
+  when "--mode"
+    mode = ARGV[i + 1].downcase
+    unless ["http", "stdio"].include?(mode) # rubocop:disable Performance/CollectionLiteralInLoop
+      puts "Error: Invalid mode '#{mode}'. Must be 'http' or 'stdio'."
+      exit 1
+    end
+    i += 2
+  else
+    i += 1
+  end
+end
+
+RailsMcpServer.config do |config|
+  config.log_level = log_level
+end
+
+RailsMcpServer.log(:info, "Starting Rails MCP Server in #{mode} mode...")
+
+# Create tools configuration for both modes
+def setup_mcp_tools(server)
+  server.register_tools(RailsMcpServer::SwitchProject, RailsMcpServer::ProjectInfo,
+    RailsMcpServer::ListFiles, RailsMcpServer::GetFile, RailsMcpServer::GetRoutes, RailsMcpServer::GetModels,
+    RailsMcpServer::GetSchema, RailsMcpServer::AnalyzeControllerViews, RailsMcpServer::AnalyzeEnvironmentConfig)
+end
+
+case mode
+when "http"
+  puts "Starting Rack application with MCP middleware on http://localhost:#{port}"
+  puts "MCP endpoints:"
+  puts "  - http://localhost:#{port}/mcp/sse (SSE endpoint)"
+  puts "  - http://localhost:#{port}/mcp/messages (JSON-RPC endpoint)"
+  puts "Press Ctrl+C to stop"
+
+  rack_app = ->(env) {
+    [200, {"Content-Type" => "text/plain"}, ["Rails MCP Server #{RailsMcpServer::VERSION}"]]
+  }
+
+  mcp_app = FastMcp.rack_middleware(
+    rack_app,
+    name: "rails-mcp-server", version: RailsMcpServer::VERSION,
+    logger: RailsMcpServer.logger
+  ) { |server| setup_mcp_tools(server) }
+
+  app = Rack::Builder.new { run mcp_app }
+  config = Puma::Configuration.new do |user_config|
+    user_config.bind "tcp://localhost:#{port}"
+    user_config.app app
+  end
+
+  launcher = Puma::Launcher.new(config)
+  launcher.run
+when "stdio"
+  RailsMcpServer.log(:info, "Starting MCP server in STDIO mode...")
+
+  server = FastMcp::Server.new(name: "rails-mcp-server", version: RailsMcpServer::VERSION)
+  setup_mcp_tools(server)
+
+  server.start
+end
+
+RailsMcpServer.log(:info, "Stopping Rails MCP Server...")
+exit

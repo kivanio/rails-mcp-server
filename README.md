@@ -15,6 +15,8 @@ This Rails MCP Server implements the MCP specification to give AI models access 
 - View Rails routes
 - Inspect model information
 - Get database schema information
+- Analyze controller-view relationships
+- Analyze environment configurations
 - Follow the Model Context Protocol standard
 
 ## Installation
@@ -110,28 +112,44 @@ Replace "/home/your_user/.rbenv/shims/ruby" with your actual path for the Ruby s
 
 ## Usage
 
-Start the server:
+### Starting the server
+
+The Rails MCP Server can run in two modes:
+
+1. **STDIO mode (default)**: Communicates over standard input/output for direct integration with clients like Claude Desktop.
+2. **HTTP mode**: Runs as an HTTP server with JSON-RPC and Server-Sent Events (SSE) endpoints.
 
 ```bash
+# Start in default STDIO mode
 rails-mcp-server
+
+# Start in HTTP mode on the default port (6029)
+rails-mcp-server --mode http
+
+# Start in HTTP mode on a custom port
+rails-mcp-server --mode http -p 8080
 ```
+
+When running in HTTP mode, the server provides two endpoints:
+
+- JSON-RPC endpoint: `http://localhost:<port>/mcp/messages`
+- SSE endpoint: `http://localhost:<port>/mcp/sse`
 
 ### Logging Options
 
 The server logs to a file in the `./log` directory by default. You can customize logging with these options:
 
 ```bash
-# Set the log level (debug, info, warn, error, fatal)
+# Set the log level (debug, info, error)
 rails-mcp-server --log-level debug
 ```
 
 ## How the Server Works
 
-The Rails MCP Server implements the Model Context Protocol over standard input/output (stdio). It:
+The Rails MCP Server implements the Model Context Protocol using either:
 
-1. Reads JSON-RPC 2.0 requests from standard input
-2. Processes the requests using the appropriate tools
-3. Returns JSON-RPC 2.0 responses to standard output
+- **STDIO mode**: Reads JSON-RPC 2.0 requests from standard input and returns responses to standard output.
+- **HTTP mode**: Provides HTTP endpoints for JSON-RPC 2.0 requests and Server-Sent Events.
 
 Each request includes a sequence number to match requests with responses, as defined in the MCP specification.
 
@@ -141,31 +159,13 @@ The server provides the following tools for interacting with Rails projects:
 
 ### 1. `switch_project`
 
-Switch the active Rails project.
+**Description:** Change the active Rails project to interact with a different codebase. Must be called before using other tools. Available projects are defined in the projects.yml configuration file.
 
 **Parameters:**
 
 - `project_name`: (String, required) Name of the project to switch to, as defined in the projects.yml file
 
-**Example:**
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": "123",
-  "method": "tools/call",
-  "params": {
-    "name": "switch_project",
-    "arguments": {
-      "project_name": "blog"
-    }
-  }
-}
-```
-
-**Description:** Change the active Rails project to interact with a different codebase. Must be called before using other tools. Available projects are defined in the projects.yml configuration file.
-
-Examples:
+#### Examples
 
 ```
 Can you switch to the "store" project so we can explore it?
@@ -181,27 +181,11 @@ Switch to the "ecommerce" project and give me a summary of the codebase.
 
 ### 2. `get_project_info`
 
-Get information about the current Rails project, including version, directory structure, and configuration.
+**Description:** Retrieve comprehensive information about the current Rails project, including Rails version, directory structure, API-only status, and overall project organization. Useful for initial project exploration and understanding the codebase structure.
 
 **Parameters:** None
 
-**Example:**
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": "124",
-  "method": "tools/call",
-  "params": {
-    "name": "get_project_info",
-    "arguments": {}
-  }
-}
-```
-
-**Description:** Retrieve comprehensive information about the current Rails project, including Rails version, directory structure, API-only status, and overall project organization.
-
-Examples:
+#### Examples
 
 ```
 Now that we're in the blog project, can you give me an overview of the project structure and Rails version?
@@ -217,33 +201,14 @@ I'd like to understand the high-level architecture of this project. Can you prov
 
 ### 3. `list_files`
 
-List files in the Rails project, with optional directory path and pattern filtering.
+**Description:** List files in the Rails project matching specific criteria. Use this to explore project directories or locate specific file types. If no parameters are provided, lists files in the project root.
 
 **Parameters:**
 
-- `directory`: (String, optional) Directory path relative to the project root
-- `pattern`: (String, optional) File pattern to match (e.g., "*.rb")
+- `directory`: (String, optional) Directory path relative to the project root (e.g., 'app/models', 'config')
+- `pattern`: (String, optional) File pattern using glob syntax (e.g., '.rb' for Ruby files, '.erb' for ERB templates)
 
-**Example:**
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": "125",
-  "method": "tools/call",
-  "params": {
-    "name": "list_files",
-    "arguments": {
-      "directory": "app/models",
-      "pattern": "*.rb"
-    }
-  }
-}
-```
-
-**Description:** List files in the Rails project matching specific criteria. Use this to explore project directories or locate specific file types.
-
-Examples:
+#### Examples
 
 ```
 Can you list all the model files in this project?
@@ -263,31 +228,13 @@ List all the JavaScript files in the app/javascript directory.
 
 ### 4. `get_file`
 
-Get the content of a file in the Rails project with syntax highlighting.
+**Description:** Retrieve the complete content of a specific file with syntax highlighting. Use this to examine implementation details, configurations, or any text file in the project.
 
 **Parameters:**
 
-- `path`: (String, required) File path relative to the project root
+- `path`: (String, required) File path relative to the project root (e.g., 'app/models/user.rb', 'config/routes.rb')
 
-**Example:**
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": "126",
-  "method": "tools/call",
-  "params": {
-    "name": "get_file",
-    "arguments": {
-      "path": "app/models/user.rb"
-    }
-  }
-}
-```
-
-**Description:** Retrieve the complete content of a specific file with syntax highlighting.
-
-Examples:
+#### Examples
 
 ```
 Can you show me the content of the User model file?
@@ -307,27 +254,11 @@ I'd like to examine the routes file. Can you display the content of config/route
 
 ### 5. `get_routes`
 
-Get the routes defined in the Rails project.
+**Description:** Retrieve all HTTP routes defined in the Rails application with their associated controllers and actions. Equivalent to running 'rails routes' command. This helps understand the API endpoints or page URLs available in the application.
 
 **Parameters:** None
 
-**Example:**
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": "127",
-  "method": "tools/call",
-  "params": {
-    "name": "get_routes",
-    "arguments": {}
-  }
-}
-```
-
-**Description:** Retrieve all HTTP routes defined in the Rails application with their associated controllers and actions.
-
-Examples:
+#### Examples
 
 ```
 Can you show me all the routes defined in this application?
@@ -343,31 +274,13 @@ Show me the routing configuration for this Rails app so I can see how the URLs a
 
 ### 6. `get_models`
 
-Get information about the models in the Rails project, including schema, associations, and definitions.
+**Description:** Retrieve detailed information about Active Record models in the project. When called without parameters, lists all model files. When a specific model is specified, returns its schema, associations (has_many, belongs_to, has_one), and complete source code.
 
 **Parameters:**
 
-- `model_name`: (String, optional) Name of a specific model to get information for
+- `model_name`: (String, optional) Class name of a specific model to get detailed information for (e.g., 'User', 'Product'). Use CamelCase, not snake_case.
 
-**Example:**
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": "128",
-  "method": "tools/call",
-  "params": {
-    "name": "get_models",
-    "arguments": {
-      "model_name": "User"
-    }
-  }
-}
-```
-
-**Description:** Retrieve detailed information about Active Record models in the project.
-
-Examples:
+#### Examples
 
 ```
 Can you list all the models in this Rails project?
@@ -387,31 +300,13 @@ What are all the models in this application, and can you then show me details fo
 
 ### 7. `get_schema`
 
-Get the database schema for the Rails project or for a specific table.
+**Description:** Retrieve database schema information for the Rails application. Without parameters, returns all tables and the complete schema.rb. With a table name, returns detailed column information including data types, constraints, and foreign keys for that specific table.
 
 **Parameters:**
 
-- `table_name`: (String, optional) Name of a specific table to get schema for
+- `table_name`: (String, optional) Database table name to get detailed schema information for (e.g., 'users', 'products'). Use snake_case, plural form.
 
-**Example:**
-
-```json
-{
-  "jsonrpc": "2.0",
-  "id": "129",
-  "method": "tools/call",
-  "params": {
-    "name": "get_schema",
-    "arguments": {
-      "table_name": "users"
-    }
-  }
-}
-```
-
-**Description:** Retrieve database schema information for the Rails application.
-
-Examples:
+#### Examples
 
 ```
 Can you show me the complete database schema for this Rails application?
@@ -429,41 +324,68 @@ Show me the columns and their data types in the products table.
 I need to understand the database design. Can you first list all tables and then show me details for the orders table?
 ```
 
+### 8. `analyze_controller_views`
+
+**Description:** Analyze the relationships between controllers, their actions, and corresponding views to understand the application's UI flow.
+
+**Parameters:**
+
+- `controller_name`: (String, optional) Name of a specific controller to analyze (e.g., 'UsersController' or 'users'). If omitted, all controllers will be analyzed.
+
+#### Examples
+
+```
+Can you analyze the Users controller and its views to help me understand the UI flow?
+```
+
+### 9. `analyze_environment_config`
+
+**Description:** Analyze environment configurations to identify inconsistencies, security issues, and missing variables across environments.
+
+**Parameters:** None
+
+#### Examples
+
+```
+Can you analyze the environment configurations to find any security issues or missing environment variables?
+```
+
 ## Integration with LLM Clients
 
 This server is designed to be integrated with LLM clients that support the Model Context Protocol, such as Claude Desktop or other MCP-compatible applications.
-
 To use with an MCP client:
 
-1. Start the Rails MCP Server
-2. Connect your MCP-compatible client to the server
-3. The client will be able to use the available tools to interact with your Rails projects
+1. Start the Rails MCP Server (it will use STDIO mode by default)
+1. Connect your MCP-compatible client to the server
+1. The client will be able to use the available tools to interact with your Rails projects
 
-## Manual Testing
+## Testing and Debugging
 
-You can manually test the server by sending JSON-RPC requests to its standard input:
+The easiest way to test and debug the Rails MCP Server is by using the MCP Inspector, a developer tool designed specifically for testing and debugging MCP servers.
 
-```bash
-echo '0 {"jsonrpc":"2.0","id":"test-123","method":"ping"}' | rails-mcp-server
-```
-
-Expected response:
+To use MCP Inspector with Rails MCP Server:
 
 ```
-0 {"jsonrpc":"2.0","id":"test-123","result":{"version":"1.0.0"}}
+# Install and run MCP Inspector with your Rails MCP Server
+npm -g install @modelcontextprotocol/inspector
+
+npx @modelcontextprotocol/inspector /path/to/rails-mcp-server
 ```
 
-Or test multiple commands in sequence:
+This will:
 
-```bash
-(echo '0 {"jsonrpc":"2.0","id":"test-123","method":"tools/list"}'; sleep 1; echo '1 {"jsonrpc":"2.0","id":"test-456","method":"tools/call","params":{"name":"switch_project","arguments":{"project_name":"blog"}}}') | rails-mcp-server
-```
+1. Start your Rails MCP Server in HTTP mode
+1. Launch the MCP Inspector UI in your browser (default port: 6274)
+1. Set up an MCP Proxy server (default port: 6277)
 
-You can also use `jq` to parse the output and format it nicely:
+In the MCP Inspector UI, you can:
 
-```bash
-echo '0 {"jsonrpc":"2.0","id":"list-tools","method":"tools/list"}' | rails-mcp-server | sed 's/^[0-9]* //' | jq '.result.tools'
-```
+- See all available tools
+- Execute tool calls interactively
+- View request and response details
+- Debug issues in real-time
+
+The Inspector UI provides an intuitive interface to interact with your MCP server, making it easy to test and debug your Rails MCP Server implementation.
 
 ## License
 

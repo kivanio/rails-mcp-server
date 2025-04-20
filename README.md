@@ -272,7 +272,7 @@ I need to understand the API endpoints available in this project. Can you list t
 Show me the routing configuration for this Rails app so I can see how the URLs are structured.
 ```
 
-### 6. `get_models`
+### 6. `analyze_models`
 
 **Description:** Retrieve detailed information about Active Record models in the project. When called without parameters, lists all model files. When a specific model is specified, returns its schema, associations (has_many, belongs_to, has_one), and complete source code.
 

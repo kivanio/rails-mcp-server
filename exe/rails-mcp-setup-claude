@@ -119,7 +119,7 @@ end
 # Update configuration
 config["mcpServers"] ||= {}
 # config["mcpServers"]["railsMcpServer"] = {"command" => "ruby", "args" => [server_path]}
-config["mcpServers"]["railsMcpServer"] = {"command" => server_pathi, "args" => []}
+config["mcpServers"]["railsMcpServer"] = {"command" => server_path, "args" => []}
 
 # Write configuration back to file
 File.write(claude_config_file, JSON.pretty_generate(config))

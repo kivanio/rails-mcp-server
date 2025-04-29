@@ -30,7 +30,7 @@ module RailsMcpServer
 
       # Create empty projects file if it doesn't exist
       unless File.exist?(projects_file)
-        @logger.add(:info, "Creating empty projects file: #{projects_file}")
+        @logger.add(Logger::INFO, "Creating empty projects file: #{projects_file}")
         FileUtils.mkdir_p(File.dirname(projects_file))
         File.write(projects_file, "# Rails MCP Projects\n# Format: project_name: /path/to/project\n")
       end

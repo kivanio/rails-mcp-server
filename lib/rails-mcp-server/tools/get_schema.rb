@@ -22,7 +22,7 @@ module RailsMcpServer
         # Execute the Rails schema command for a specific table
         schema_output = RailsMcpServer::RunProcess.execute_rails_command(
           active_project_path,
-          "bin/rails runner \"require 'active_record'; puts ActiveRecord::Base.connection.columns('#{table_name}').map{|c| [c.name, c.type, c.null, c.default].inspect}.join('\n')\""
+          "bin/rails runner \"require 'active_record'; puts ActiveRecord::Base.connection.columns('#{table_name}').map{|c| [c.name, c.type, c.null, c.default].inspect}.join('\\n')\""
         )
 
         if schema_output.strip.empty?
@@ -33,7 +33,7 @@ module RailsMcpServer
         end
 
         # Parse the column information
-        columns = schema_output.strip.split("\n").map do |column_info|
+        columns = schema_output.strip.split("\\n").map do |column_info|
           eval(column_info) # This is safe because we're generating the string ourselves # rubocop:disable Security/Eval
         end
 

@@ -1,3 +1,5 @@
+require "bundler"
+
 module RailsMcpServer
   class RunProcess
     def self.execute_rails_command(project_path, command)

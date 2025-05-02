@@ -1,6 +1,9 @@
 #!/usr/bin/env ruby
 
-require "bundler/setup"
+if defined?(Bundler) && !defined?(Bundler::ORIGINAL_ENV)
+  require "bundler/setup"
+  Bundler::ORIGINAL_ENV = ENV.to_h
+end
 
 require "fast_mcp"
 require "rack"
@@ -79,7 +82,9 @@ when "http"
   puts "MCP endpoints:"
   puts "  - http://localhost:#{port}/mcp/sse (SSE endpoint)"
   puts "  - http://localhost:#{port}/mcp/messages (JSON-RPC endpoint)"
-  puts "Press Ctrl+C to stop"
+  puts ""
+  puts "Version #{RailsMcpServer::VERSION}"
+  puts ""
 
   rack_app = ->(env) {
     [200, {"Content-Type" => "text/plain"}, ["Rails MCP Server #{RailsMcpServer::VERSION}"]]

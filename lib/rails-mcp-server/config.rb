@@ -2,7 +2,7 @@ require "logger"
 
 module RailsMcpServer
   class Config
-    attr_accessor :logger, :log_level, :projects, :current_project, :active_project_path
+    attr_accessor :logger, :log_level, :projects, :current_project, :active_project_path, :config_dir
 
     def self.setup
       new.tap do |instance|

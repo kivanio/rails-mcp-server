@@ -1,0 +1,304 @@
+#!/usr/bin/env ruby
+
+require "net/http"
+require "uri"
+require "fileutils"
+require "digest"
+require "yaml"
+require "optparse"
+
+# Resource downloader for FastMcp
+class ResourceDownloader
+  RESOURCES = {
+    rails: {
+      url: "https://raw.githubusercontent.com/rails/rails/v8.0.2/guides/source",
+      files: %w[
+        action_cable_overview.md
+        action_controller_advanced_topics.md
+        action_controller_overview.md
+        action_mailbox_basics.md
+        action_mailer_basics.md
+        action_text_overview.md
+        action_view_helpers.md
+        action_view_overview.md
+        active_job_basics.md
+        active_model_basics.md
+        active_record_basics.md
+        active_record_callbacks.md
+        active_record_composite_primary_keys.md
+        active_record_encryption.md
+        active_record_migrations.md
+        active_record_multiple_databases.md
+        active_record_postgresql.md
+        active_record_querying.md
+        active_record_validations.md
+        active_storage_overview.md
+        active_support_core_extensions.md
+        active_support_instrumentation.md
+        api_app.md
+        api_documentation_guidelines.md
+        asset_pipeline.md
+        association_basics.md
+        autoloading_and_reloading_constants.md
+        caching_with_rails.md
+        command_line.md
+        configuring.md
+        contributing_to_ruby_on_rails.md
+        debugging_rails_applications.md
+        development_dependencies_install.md
+        engines.md
+        error_reporting.md
+        form_helpers.md
+        generators.md
+        getting_started.md
+        getting_started_with_devcontainer.md
+        i18n.md
+        initialization.md
+        install_ruby_on_rails.md
+        layouts_and_rendering.md
+        maintenance_policy.md
+        plugins.md
+        rails_on_rack.md
+        routing.md
+        ruby_on_rails_guides_guidelines.md
+        security.md
+        testing.md
+        threading_and_code_execution.md
+        tuning_performance_for_deployment.md
+        upgrading_ruby_on_rails.md
+        working_with_javascript_in_rails.md
+      ]
+    }
+  }.freeze
+
+  def initialize(resource_name, options = {})
+    @resource_name = resource_name.to_sym
+    @resource_config = RESOURCES[@resource_name]
+    @force = options[:force] || false
+    @verbose = options[:verbose] || false
+
+    raise "Unknown resource: #{resource_name}" unless @resource_config
+
+    @config_folder = get_rails_mcp_config_dir
+    @resource_folder = File.join(@config_folder, "resources", resource_name.to_s)
+    @manifest_file = File.join(@resource_folder, "manifest.yaml")
+  end
+
+  # Determine the Rails MCP config directory based on platform
+  def get_rails_mcp_config_dir
+    if RUBY_PLATFORM.match?(/mswin|mingw|cygwin/)
+      # Windows
+      File.join(ENV["APPDATA"], "rails-mcp")
+    else
+      # Linux/Unix - honor XDG_CONFIG_HOME
+      xdg_config_home = ENV["XDG_CONFIG_HOME"]
+      if xdg_config_home && !xdg_config_home.empty?
+        File.join(xdg_config_home, "rails-mcp")
+      else
+        File.join(Dir.home, ".config", "rails-mcp")
+      end
+    end
+  end
+
+  def download
+    setup_directories
+    load_manifest
+
+    puts "Downloading #{@resource_name} resources..." if @verbose
+
+    downloaded = 0
+    skipped = 0
+    failed = 0
+
+    @resource_config[:files].each do |file|
+      result = download_file(file)
+      case result
+      when :downloaded
+        downloaded += 1
+      when :skipped
+        skipped += 1
+      when :failed
+        failed += 1
+      end
+    end
+
+    save_manifest
+
+    puts "\nSummary:"
+    puts "  Downloaded: #{downloaded}"
+    puts "  Skipped: #{skipped}"
+    puts "  Failed: #{failed}"
+  end
+
+  private
+
+  def setup_directories
+    FileUtils.mkdir_p(@resource_folder)
+  end
+
+  def load_manifest
+    @manifest = if File.exist?(@manifest_file)
+      YAML.load_file(@manifest_file)
+    else
+      {
+        "resource" => @resource_name.to_s,
+        "base_url" => @resource_config[:url],
+        "files" => {},
+        "updated_at" => Time.now.to_s
+      }
+    end
+  end
+
+  def save_manifest
+    @manifest["updated_at"] = Time.now.to_s
+    File.write(@manifest_file, @manifest.to_yaml)
+  end
+
+  def download_file(filename)
+    file_path = File.join(@resource_folder, filename)
+    url = "#{@resource_config[:url]}/#{filename}"
+
+    # Check if file exists and hasn't changed
+    if File.exist?(file_path) && !@force
+      current_hash = calculate_file_hash(file_path)
+      if @manifest["files"][filename] && @manifest["files"][filename]["hash"] == current_hash
+        puts "Skipping #{filename} (unchanged)" if @verbose
+        return :skipped
+      end
+    end
+
+    print "Downloading #{filename}... " if @verbose
+
+    begin
+      uri = URI(url)
+      response = Net::HTTP.get_response(uri)
+
+      if response.code == "200"
+        # Save the file
+        FileUtils.mkdir_p(File.dirname(file_path))
+        File.write(file_path, response.body)
+
+        # Extract metadata from markdown files
+        metadata = extract_metadata(response.body, filename) if filename.end_with?(".md")
+
+        # Update manifest
+        @manifest["files"][filename] = {
+          "hash" => calculate_file_hash(file_path),
+          "size" => File.size(file_path),
+          "downloaded_at" => Time.now.to_s
+        }
+
+        if metadata
+          @manifest["files"][filename].merge!(metadata)
+        end
+
+        puts "done" if @verbose
+        :downloaded
+      else
+        puts "failed (HTTP #{response.code})" if @verbose
+        :failed
+      end
+    rescue => e
+      puts "failed (#{e.message})" if @verbose
+      :failed
+    end
+  end
+
+  def calculate_file_hash(file_path)
+    Digest::SHA256.file(file_path).hexdigest
+  end
+
+  def extract_metadata(content, filename)
+    return nil unless filename.end_with?(".md")
+
+    lines = content.lines
+    metadata = {}
+
+    # Look for title (line followed by ===)
+    lines.each_with_index do |line, index|
+      next if index >= lines.length - 1
+
+      if /^=+$/.match?(lines[index + 1].strip)
+        title = line.strip
+        metadata["title"] = title
+
+        # Look for description after the title
+        description_start = index + 2
+        description_lines = []
+
+        (description_start...lines.length).each do |i|
+          break if /^-+$/.match?(lines[i].strip)
+          description_lines << lines[i].strip unless lines[i].strip.empty?
+        end
+
+        metadata["description"] = description_lines.join(" ") unless description_lines.empty?
+        break
+      end
+    end
+
+    # Alternative: Look for H1 header (# Title)
+    if metadata.empty?
+      lines.each_with_index do |line, index|
+        if line.strip =~ /^#\s+(.+)$/
+          metadata["title"] = $1.strip
+
+          # Look for description in following lines
+          description_lines = []
+          (index + 1...lines.length).each do |i|
+            break if lines[i].strip =~ /^#/ || lines[i].strip =~ /^-+$/
+            description_lines << lines[i].strip unless lines[i].strip.empty?
+          end
+
+          metadata["description"] = description_lines.join(" ") unless description_lines.empty?
+          break
+        end
+      end
+    end
+
+    metadata.empty? ? nil : metadata
+  end
+end
+
+# Main execution
+options = {
+  force: false,
+  verbose: false
+}
+
+parser = OptionParser.new do |opts|
+  opts.banner = "Usage: rails-mcp-server-download-resources [options] RESOURCE_NAME"
+
+  opts.on("-f", "--force", "Force download even if files haven't changed") do
+    options[:force] = true
+  end
+
+  opts.on("-v", "--verbose", "Verbose output") do
+    options[:verbose] = true
+  end
+
+  opts.on("-h", "--help", "Show this help message") do
+    puts opts
+    exit
+  end
+end
+
+parser.parse!
+
+if ARGV.empty?
+  puts parser
+  puts "\nAvailable resources:"
+  ResourceDownloader::RESOURCES.keys.each do |resource|
+    puts "  - #{resource}"
+  end
+  exit 1
+end
+
+resource_name = ARGV[0]
+
+begin
+  downloader = ResourceDownloader.new(resource_name, options)
+  downloader.download
+rescue => e
+  puts "Error: #{e.message}"
+  exit 1
+end

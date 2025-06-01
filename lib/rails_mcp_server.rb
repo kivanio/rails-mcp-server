@@ -17,9 +17,16 @@ require_relative "rails-mcp-server/tools/get_schema"
 require_relative "rails-mcp-server/tools/analyze_controller_views"
 require_relative "rails-mcp-server/tools/analyze_environment_config"
 require_relative "rails-mcp-server/tools/switch_project"
+require_relative "rails-mcp-server/tools/load_guide"
 require_relative "rails-mcp-server/resources/base_resource"
+require_relative "rails-mcp-server/resources/base_guide_resource"
+require_relative "rails-mcp-server/resources/base_guide_resources_list"
 require_relative "rails-mcp-server/resources/rails_guides_resource"
 require_relative "rails-mcp-server/resources/rails_guides_resources"
+require_relative "rails-mcp-server/resources/stimulus_guides_resource"
+require_relative "rails-mcp-server/resources/stimulus_guides_resources"
+require_relative "rails-mcp-server/resources/turbo_guides_resource"
+require_relative "rails-mcp-server/resources/turbo_guides_resources"
 
 module RailsMcpServer
   @levels = {debug: Logger::DEBUG, info: Logger::INFO, error: Logger::ERROR}

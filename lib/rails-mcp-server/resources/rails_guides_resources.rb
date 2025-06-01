@@ -1,5 +1,5 @@
 module RailsMcpServer
-  class RailsGuidesResources < BaseResource
+  class RailsGuidesResources < BaseGuideResourcesList
     uri "rails://guides"
 
     # Resource metadata
@@ -7,38 +7,31 @@ module RailsMcpServer
     description "Access to available Rails guides"
     mime_type "text/markdown"
 
-    def content
-      manifest_file = File.join(config_dir, "resources", "rails", "manifest.yaml")
+    protected
 
-      unless File.exist?(manifest_file)
-        log(:error, "No Rails guides found. Run 'rails-mcp-server-download-resources rails' first.")
-        "No Rails guides found. Run 'rails-mcp-server-download-resources rails' first."
-      end
-
-      log(:debug, "Loading Rails guides...")
-      load_guides_index(manifest_file)
+    def framework_name
+      "Rails"
     end
 
-    private
+    def resource_directory
+      "rails"
+    end
 
-    def load_guides_index(manifest_file)
-      manifest = YAML.load_file(manifest_file)
-      guides = []
+    def download_command
+      "rails-mcp-server-download-resources rails"
+    end
 
-      manifest["files"].each do |filename, file_data|
-        log(:debug, "Loading guide: #{filename}")
+    def example_guides
+      [
+        {guide: "active_record_validations", comment: "Load validations guide"},
+        {guide: "getting_started", comment: "Load getting started guide"},
+        {guide: "routing", comment: "Load routing guide"}
+      ]
+    end
 
-        file_uri = filename.sub(".md", "")
-        guide_info = <<~GUIDE
-          uri: "#{uri}/#{file_uri}",
-          #{file_data["title"]}
-          #{file_data["description"]}
-        GUIDE
-
-        guides << guide_info
-      end
-
-      guides.join("\n---\n")
+    # Rails guides don't use handbook/reference sections
+    def supports_sections?
+      false
     end
   end
 end

@@ -76,7 +76,8 @@ RailsMcpServer.log(:info, "Starting Rails MCP Server in #{mode} mode...")
 def setup_mcp_tools(server)
   server.register_tools(RailsMcpServer::SwitchProject, RailsMcpServer::ProjectInfo,
     RailsMcpServer::ListFiles, RailsMcpServer::GetFile, RailsMcpServer::GetRoutes, RailsMcpServer::AnalyzeModels,
-    RailsMcpServer::GetSchema, RailsMcpServer::AnalyzeControllerViews, RailsMcpServer::AnalyzeEnvironmentConfig)
+    RailsMcpServer::GetSchema, RailsMcpServer::AnalyzeControllerViews, RailsMcpServer::AnalyzeEnvironmentConfig,
+    RailsMcpServer::LoadGuide)
 
   server.register_resources(RailsMcpServer::RailsGuidesResource, RailsMcpServer::RailsGuidesResources)
 end

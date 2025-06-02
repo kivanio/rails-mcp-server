@@ -79,7 +79,9 @@ def setup_mcp_tools(server)
     RailsMcpServer::GetSchema, RailsMcpServer::AnalyzeControllerViews, RailsMcpServer::AnalyzeEnvironmentConfig,
     RailsMcpServer::LoadGuide)
 
-  server.register_resources(RailsMcpServer::RailsGuidesResource, RailsMcpServer::RailsGuidesResources)
+  server.register_resources(RailsMcpServer::RailsGuidesResource, RailsMcpServer::RailsGuidesResources,
+    RailsMcpServer::StimulusGuidesResource, RailsMcpServer::StimulusGuidesResources, RailsMcpServer::TurboGuidesResource,
+    RailsMcpServer::TurboGuidesResources, RailsMcpServer::CustomGuidesResource, RailsMcpServer::CustomGuidesResources)
 end
 
 case mode

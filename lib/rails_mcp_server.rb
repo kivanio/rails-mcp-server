@@ -27,6 +27,8 @@ require_relative "rails-mcp-server/resources/stimulus_guides_resource"
 require_relative "rails-mcp-server/resources/stimulus_guides_resources"
 require_relative "rails-mcp-server/resources/turbo_guides_resource"
 require_relative "rails-mcp-server/resources/turbo_guides_resources"
+require_relative "rails-mcp-server/resources/custom_guides_resource"
+require_relative "rails-mcp-server/resources/custom_guides_resources"
 
 module RailsMcpServer
   @levels = {debug: Logger::DEBUG, info: Logger::INFO, error: Logger::ERROR}

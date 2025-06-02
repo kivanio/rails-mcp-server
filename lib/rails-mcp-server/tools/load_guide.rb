@@ -2,10 +2,10 @@ module RailsMcpServer
   class LoadGuide < BaseTool
     tool_name "load_guide"
 
-    description "Load documentation guides from Rails, Turbo, or Stimulus. Use this to get guide content for context in conversations."
+    description "Load documentation guides from Rails, Turbo, Stimulus, or Custom. Use this to get guide content for context in conversations."
 
     arguments do
-      required(:guides).filled(:string).description("The guides library to search: 'rails', 'turbo', or 'stimulus'")
+      required(:guides).filled(:string).description("The guides library to search: 'rails', 'turbo', 'stimulus', or 'custom'")
       optional(:guide).maybe(:string).description("Specific guide name to load. If not provided, returns available guides list.")
     end
 
@@ -14,8 +14,8 @@ module RailsMcpServer
       guides_type = guides.downcase.strip
 
       # Validate supported guide types
-      unless %w[rails turbo stimulus].include?(guides_type)
-        message = "Unsupported guide type '#{guides_type}'. Supported types: rails, turbo, stimulus."
+      unless %w[rails turbo stimulus custom].include?(guides_type)
+        message = "Unsupported guide type '#{guides_type}'. Supported types: rails, turbo, stimulus, custom."
         log(:error, message)
         return message
       end
@@ -42,57 +42,155 @@ module RailsMcpServer
       when "turbo"
         uri = "turbo://guides"
         read_resource(uri, TurboGuidesResources)
+      when "custom"
+        uri = "custom://guides"
+        read_resource(uri, CustomGuidesResources)
       else
         "Guide type '#{guides_type}' not supported."
       end
     end
 
     def load_specific_guide(guide_name, guides_type)
+      # First try exact match
+      exact_match_content = try_exact_match(guide_name, guides_type)
+      return exact_match_content if exact_match_content && !exact_match_content.include?("Guide not found")
+
+      # If exact match fails, try fuzzy matching
+      try_fuzzy_matching(guide_name, guides_type)
+    end
+
+    def try_exact_match(guide_name, guides_type)
       case guides_type
       when "rails"
         uri = "rails://guides/#{guide_name}"
-        content = read_resource(uri, RailsGuidesResource, {guide_name: guide_name})
+        read_resource(uri, RailsGuidesResource, {guide_name: guide_name})
       when "stimulus"
         uri = "stimulus://guides/#{guide_name}"
-        content = read_resource(uri, StimulusGuidesResource, {guide_name: guide_name})
+        read_resource(uri, StimulusGuidesResource, {guide_name: guide_name})
       when "turbo"
         uri = "turbo://guides/#{guide_name}"
-        content = read_resource(uri, TurboGuidesResource, {guide_name: guide_name})
+        read_resource(uri, TurboGuidesResource, {guide_name: guide_name})
+      when "custom"
+        uri = "custom://guides/#{guide_name}"
+        read_resource(uri, CustomGuidesResource, {guide_name: guide_name})
       else
-        return "Guide type '#{guides_type}' not supported."
+        "Guide type '#{guides_type}' not supported."
+      end
+    end
+
+    def try_fuzzy_matching(guide_name, guides_type)
+      # Get all matching guides using the base guide resource directly
+      matching_guides = find_matching_guides(guide_name, guides_type)
+
+      case matching_guides.size
+      when 0
+        format_guide_not_found_message(guide_name, guides_type)
+      when 1
+        # Load the single match
+        match = matching_guides.first
+        log(:debug, "Found single fuzzy match: #{match}")
+        try_exact_match(match, guides_type)
+      when 2..3
+        # Load multiple matches (up to 3)
+        log(:debug, "Found #{matching_guides.size} fuzzy matches, loading all")
+        load_multiple_guides(matching_guides, guides_type, guide_name)
+      else
+        # Too many matches, show options
+        format_multiple_matches_message(guide_name, matching_guides, guides_type)
+      end
+    end
+
+    def find_matching_guides(guide_name, guides_type)
+      # Get the manifest to find matching files
+      manifest = load_manifest_for_guides_type(guides_type)
+      return [] unless manifest
+
+      available_guides = manifest["files"].keys.select { |f| f.end_with?(".md") }.map { |f| f.sub(".md", "") } # rubocop:disable Performance/ChainArrayAllocation
+
+      # Generate variations and find matches
+      variations = generate_guide_name_variations(guide_name, guides_type)
+      matching_guides = []
+
+      variations.each do |variation|
+        matches = available_guides.select do |guide|
+          guide.downcase.include?(variation.downcase) ||
+            variation.downcase.include?(guide.downcase) ||
+            guide.gsub(/[_\-\s]/, "").downcase.include?(variation.gsub(/[_\-\s]/, "").downcase)
+        end
+        matching_guides.concat(matches)
       end
 
-      # If the content indicates the guide wasn't found, try some common variations
-      if content&.include?("Guide not found")
-        # Try some common guide name variations
-        variations = generate_guide_name_variations(guide_name)
+      matching_guides.uniq.sort # rubocop:disable Performance/ChainArrayAllocation
+    end
 
-        variations.each do |variation|
-          next if variation == guide_name # Skip if same as original
+    def load_manifest_for_guides_type(guides_type)
+      config = RailsMcpServer.config
+      manifest_file = File.join(config.config_dir, "resources", guides_type, "manifest.yaml")
 
-          case guides_type
-          when "rails"
-            variant_uri = "rails://guides/#{variation}"
-            variant_content = read_resource(variant_uri, RailsGuidesResource, {guide_name: variation})
-          when "stimulus"
-            variant_uri = "stimulus://guides/#{variation}"
-            variant_content = read_resource(variant_uri, StimulusGuidesResource, {guide_name: variation})
-          when "turbo"
-            variant_uri = "turbo://guides/#{variation}"
-            variant_content = read_resource(variant_uri, TurboGuidesResource, {guide_name: variation})
-          end
+      return nil unless File.exist?(manifest_file)
 
-          if variant_content && !variant_content.include?("Guide not found")
-            log(:debug, "Found guide using variation: #{variation}")
-            return variant_content
-          end
+      YAML.load_file(manifest_file)
+    rescue => e
+      log(:error, "Failed to load manifest for #{guides_type}: #{e.message}")
+      nil
+    end
+
+    def load_multiple_guides(guide_names, guides_type, original_query)
+      results = []
+
+      results << "# Multiple Guides Found for '#{original_query}'"
+      results << ""
+      results << "Found #{guide_names.size} matching guides. Loading all:\n"
+
+      guide_names.each_with_index do |guide_name, index|
+        results << "---"
+        results << ""
+        results << "## #{index + 1}. #{guide_name}"
+        results << ""
+
+        content = try_exact_match(guide_name, guides_type)
+        if content && !content.include?("Guide not found") && !content.include?("Error")
+          # Remove the header from individual guide content to avoid duplication
+          clean_content = content.sub(/^#[^\n]*\n/, "").sub(/^\*\*Source:.*?\n---\n/m, "")
+          results << clean_content.strip
+        else
+          results << "*Failed to load this guide*"
         end
 
-        # If still not found, return helpful message
-        return format_guide_not_found_message(guide_name, guides_type)
+        results << "" if index < guide_names.size - 1
       end
 
-      content
+      results.join("\n")
+    end
+
+    def format_multiple_matches_message(guide_name, matches, guides_type)
+      message = <<~MSG
+        # Multiple Guides Found
+
+        Found #{matches.size} guides matching '#{guide_name}' in #{guides_type} guides:
+
+      MSG
+
+      matches.first(10).each_with_index do |match, index|
+        message += "#{index + 1}. #{match}\n"
+      end
+
+      if matches.size > 10
+        message += "... and #{matches.size - 10} more\n"
+      end
+
+      message += <<~MSG
+
+        ## To load a specific guide, use the exact name:
+        ```
+      MSG
+
+      matches.first(3).each do |match|
+        message += "load_guide guides: \"#{guides_type}\", guide: \"#{match}\"\n"
+      end
+
+      message += "```\n"
+      message
     end
 
     def read_resource(uri, resource_class, params = {})
@@ -123,7 +221,7 @@ module RailsMcpServer
       instance.content
     end
 
-    def generate_guide_name_variations(guide_name)
+    def generate_guide_name_variations(guide_name, guides_type)
       variations = []
 
       # Original name
@@ -150,16 +248,17 @@ module RailsMcpServer
       end
 
       # For Stimulus/Turbo, try with handbook/ and reference/ prefixes
-      unless guide_name.include?("/")
+      # Custom guides use flat structure like Rails, so no prefixes needed
+      unless guide_name.include?("/") || guides_type == "custom" || guides_type == "rails"
         variations << "handbook/#{guide_name}"
         variations << "reference/#{guide_name}"
       end
 
-      # Remove path prefixes for alternatives
-      if guide_name.include?("/")
+      # Remove path prefixes for alternatives (for Stimulus/Turbo)
+      if guide_name.include?("/") && guides_type != "custom" && guides_type != "rails"
         base_name = guide_name.split("/").last
         variations << base_name
-        variations.concat(generate_guide_name_variations(base_name))
+        variations.concat(generate_guide_name_variations(base_name, guides_type))
       end
 
       variations.uniq.compact # rubocop:disable Performance/ChainArrayAllocation
@@ -186,6 +285,11 @@ module RailsMcpServer
         message += <<~MSG
           - Try with section prefix: `handbook/#{guide_name}` or `reference/#{guide_name}`
           - Try without section prefix if you used one
+        MSG
+      when "custom"
+        message += <<~MSG
+          - Import custom guides with: `rails-mcp-server-download-resources --file /path/to/guides`
+          - Make sure your custom guides have been imported
         MSG
       end
 
@@ -217,6 +321,12 @@ module RailsMcpServer
           load_guide guides: "turbo", guide: "02_drive"
           load_guide guides: "turbo", guide: "reference/attributes"
         MSG
+      when "custom"
+        message += <<~MSG
+          load_guide guides: "custom", guide: "api_documentation"
+          load_guide guides: "custom", guide: "setup_guide"
+          load_guide guides: "custom", guide: "user_manual"
+        MSG
       end
 
       message += "```\n"
@@ -233,9 +343,10 @@ module RailsMcpServer
         
         ## Troubleshooting:
         - Ensure guides are downloaded: `rails-mcp-server-download-resources [rails|stimulus|turbo]`
+        - For custom guides: `rails-mcp-server-download-resources --file /path/to/guides`
         - Check that the MCP server is properly configured
         - Verify guide name is correct
-        - Use `load_guide guides: "[rails|stimulus|turbo]"` to see available guides
+        - Use `load_guide guides: "[rails|stimulus|turbo|custom]"` to see available guides
       MSG
     end
   end

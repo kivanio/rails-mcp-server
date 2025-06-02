@@ -3,11 +3,13 @@
 require "optparse"
 require_relative "../lib/rails-mcp-server/config"
 require_relative "../lib/rails-mcp-server/helpers/resource_downloader"
+require_relative "../lib/rails-mcp-server/helpers/resource_importer"
 
 # Main execution
 options = {
   force: false,
-  verbose: false
+  verbose: false,
+  file: nil
 }
 
 parser = OptionParser.new do |opts|
@@ -17,6 +19,7 @@ parser = OptionParser.new do |opts|
   opts.separator ""
   opts.separator "Available resources: rails, stimulus, turbo"
   opts.separator ""
+  opts.separator "Options:"
 
   opts.on("-f", "--force", "Force download even if files haven't changed") do
     options[:force] = true
@@ -26,14 +29,65 @@ parser = OptionParser.new do |opts|
     options[:verbose] = true
   end
 
+  opts.on("--file PATH", "Import custom markdown file(s) from PATH (file or directory)") do |path|
+    options[:file] = path
+  end
+
   opts.on("-h", "--help", "Show this help message") do
     puts opts
+    puts ""
+    puts "Examples:"
+    puts "  rails-mcp-server-download-resources rails"
+    puts "  rails-mcp-server-download-resources --file /path/to/guide.md"
+    puts "  rails-mcp-server-download-resources --file /path/to/guides/"
+    puts "  rails-mcp-server-download-resources --verbose --force --file ./docs/"
     exit
   end
 end
 
 parser.parse!
 
+# Handle --file option (import local files)
+if options[:file]
+  unless File.exist?(options[:file])
+    puts "Error: File or directory not found: #{options[:file]}"
+    exit 1
+  end
+
+  begin
+    # Initialize config to get the config directory
+    config = RailsMcpServer::Config.new
+
+    # Create and run importer for custom files
+    importer = RailsMcpServer::ResourceImporter.new(
+      "custom",
+      config_dir: config.config_dir,
+      source_path: options[:file],
+      force: options[:force],
+      verbose: options[:verbose]
+    )
+
+    results = importer.import
+
+    # Display summary
+    puts "\nImport Summary:"
+    puts "  Imported: #{results[:imported]}"
+    puts "  Skipped: #{results[:skipped]}"
+    puts "  Failed: #{results[:failed]}"
+
+    exit_code = (results[:failed] > 0) ? 1 : 0
+    exit exit_code
+  rescue RailsMcpServer::ResourceImporter::ImportError => e
+    puts "Error: #{e.message}"
+    exit 1
+  rescue => e
+    puts "Unexpected error: #{e.message}"
+    puts e.backtrace if options[:verbose]
+    exit 1
+  end
+end
+
+# Original resource download logic (download from internet)
 if ARGV.empty?
   puts parser
   puts "\nAvailable resources:"
@@ -50,6 +104,7 @@ if ARGV.empty?
     puts "  No resources configured"
   end
 
+  puts "\nOr use --file to import custom markdown files"
   exit 1
 end
 

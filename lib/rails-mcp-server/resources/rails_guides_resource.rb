@@ -1,8 +1,8 @@
 module RailsMcpServer
-  class RailsGuidesResource < BaseGuideResource
-    uri "rails://guides/{guide_name}"
+  class RailsGuidesResource < BaseResource
+    include GuideLoaderTemplate
 
-    # Resource metadata
+    uri "rails://guides/{guide_name}"
     resource_name "Rails Guides"
     description "Access to specific Rails documentation"
     mime_type "text/markdown"

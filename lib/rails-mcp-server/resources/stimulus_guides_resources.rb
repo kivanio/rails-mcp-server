@@ -1,8 +1,8 @@
 module RailsMcpServer
-  class StimulusGuidesResources < BaseGuideResourcesList
-    uri "stimulus://guides"
+  class StimulusGuidesResources < BaseResource
+    include GuideLoaderTemplate
 
-    # Resource metadata
+    uri "stimulus://guides"
     resource_name "Stimulus Guides"
     description "Access to available Stimulus guides"
     mime_type "text/markdown"

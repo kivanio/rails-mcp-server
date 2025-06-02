@@ -2,10 +2,10 @@ module RailsMcpServer
   class LoadGuide < BaseTool
     tool_name "load_guide"
 
-    description "Load documentation guides from Rails, Turbo, Stimulus, or Custom. Use this to get guide content for context in conversations."
+    description "Load documentation guides from Rails, Turbo, Stimulus, Kamal, or Custom. Use this to get guide content for context in conversations."
 
     arguments do
-      required(:guides).filled(:string).description("The guides library to search: 'rails', 'turbo', 'stimulus', or 'custom'")
+      required(:guides).filled(:string).description("The guides library to search: 'rails', 'turbo', 'stimulus', 'kamal', or 'custom'")
       optional(:guide).maybe(:string).description("Specific guide name to load. If not provided, returns available guides list.")
     end
 
@@ -14,8 +14,8 @@ module RailsMcpServer
       guides_type = guides.downcase.strip
 
       # Validate supported guide types
-      unless %w[rails turbo stimulus custom].include?(guides_type)
-        message = "Unsupported guide type '#{guides_type}'. Supported types: rails, turbo, stimulus, custom."
+      unless %w[rails turbo stimulus kamal custom].include?(guides_type)
+        message = "Unsupported guide type '#{guides_type}'. Supported types: rails, turbo, stimulus, kamal, custom."
         log(:error, message)
         return message
       end
@@ -42,6 +42,9 @@ module RailsMcpServer
       when "turbo"
         uri = "turbo://guides"
         read_resource(uri, TurboGuidesResources)
+      when "kamal"
+        uri = "kamal://guides"
+        read_resource(uri, KamalGuidesResources)
       when "custom"
         uri = "custom://guides"
         read_resource(uri, CustomGuidesResources)
@@ -70,6 +73,9 @@ module RailsMcpServer
       when "turbo"
         uri = "turbo://guides/#{guide_name}"
         read_resource(uri, TurboGuidesResource, {guide_name: guide_name})
+      when "kamal"
+        uri = "kamal://guides/#{guide_name}"
+        read_resource(uri, KamalGuidesResource, {guide_name: guide_name})
       when "custom"
         uri = "custom://guides/#{guide_name}"
         read_resource(uri, CustomGuidesResource, {guide_name: guide_name})
@@ -248,14 +254,14 @@ module RailsMcpServer
       end
 
       # For Stimulus/Turbo, try with handbook/ and reference/ prefixes
-      # Custom guides use flat structure like Rails, so no prefixes needed
-      unless guide_name.include?("/") || guides_type == "custom" || guides_type == "rails"
+      # Custom and Rails and Kamal guides use flat structure, so no prefixes needed
+      unless guide_name.include?("/") || %w[custom rails kamal].include?(guides_type)
         variations << "handbook/#{guide_name}"
         variations << "reference/#{guide_name}"
       end
 
       # Remove path prefixes for alternatives (for Stimulus/Turbo)
-      if guide_name.include?("/") && guides_type != "custom" && guides_type != "rails"
+      if guide_name.include?("/") && !%w[custom rails kamal].include?(guides_type)
         base_name = guide_name.split("/").last
         variations << base_name
         variations.concat(generate_guide_name_variations(base_name, guides_type))
@@ -291,6 +297,11 @@ module RailsMcpServer
           - Import custom guides with: `rails-mcp-server-download-resources --file /path/to/guides`
           - Make sure your custom guides have been imported
         MSG
+      when "kamal"
+        message += <<~MSG
+          - Try with section prefix: `commands/#{guide_name}` or `configuration/#{guide_name}`
+          - Check available sections: installation, configuration, commands, hooks, upgrading
+        MSG
       end
 
       message += <<~MSG
@@ -321,6 +332,12 @@ module RailsMcpServer
           load_guide guides: "turbo", guide: "02_drive"
           load_guide guides: "turbo", guide: "reference/attributes"
         MSG
+      when "kamal"
+        message += <<~MSG
+          load_guide guides: "kamal", guide: "installation"
+          load_guide guides: "kamal", guide: "configuration"
+          load_guide guides: "kamal", guide: "commands/deploy"
+        MSG
       when "custom"
         message += <<~MSG
           load_guide guides: "custom", guide: "api_documentation"
@@ -342,11 +359,11 @@ module RailsMcpServer
         #{message}
         
         ## Troubleshooting:
-        - Ensure guides are downloaded: `rails-mcp-server-download-resources [rails|stimulus|turbo]`
+        - Ensure guides are downloaded: `rails-mcp-server-download-resources [rails|stimulus|turbo|kamal]`
         - For custom guides: `rails-mcp-server-download-resources --file /path/to/guides`
         - Check that the MCP server is properly configured
         - Verify guide name is correct
-        - Use `load_guide guides: "[rails|stimulus|turbo|custom]"` to see available guides
+        - Use `load_guide guides: "[rails|stimulus|turbo|kamal|custom]"` to see available guides
       MSG
     end
   end

@@ -19,8 +19,14 @@ require_relative "rails-mcp-server/tools/analyze_environment_config"
 require_relative "rails-mcp-server/tools/switch_project"
 require_relative "rails-mcp-server/tools/load_guide"
 require_relative "rails-mcp-server/resources/base_resource"
-require_relative "rails-mcp-server/resources/base_guide_resource"
-require_relative "rails-mcp-server/resources/base_guide_resources_list"
+
+require_relative "rails-mcp-server/resources/guide_content_formatter"
+require_relative "rails-mcp-server/resources/guide_error_handler"
+require_relative "rails-mcp-server/resources/guide_file_finder"
+require_relative "rails-mcp-server/resources/guide_loader_template"
+require_relative "rails-mcp-server/resources/guide_manifest_operations"
+require_relative "rails-mcp-server/resources/guide_framework_contract"
+
 require_relative "rails-mcp-server/resources/rails_guides_resource"
 require_relative "rails-mcp-server/resources/rails_guides_resources"
 require_relative "rails-mcp-server/resources/stimulus_guides_resource"
@@ -29,6 +35,8 @@ require_relative "rails-mcp-server/resources/turbo_guides_resource"
 require_relative "rails-mcp-server/resources/turbo_guides_resources"
 require_relative "rails-mcp-server/resources/custom_guides_resource"
 require_relative "rails-mcp-server/resources/custom_guides_resources"
+require_relative "rails-mcp-server/resources/kamal_guides_resource"
+require_relative "rails-mcp-server/resources/kamal_guides_resources"
 
 module RailsMcpServer
   @levels = {debug: Logger::DEBUG, info: Logger::INFO, error: Logger::ERROR}

@@ -1,8 +1,8 @@
 module RailsMcpServer
-  class CustomGuidesResources < BaseGuideResourcesList
-    uri "custom://guides"
+  class CustomGuidesResources < BaseResource
+    include GuideLoaderTemplate
 
-    # Resource metadata
+    uri "custom://guides"
     resource_name "Custom Guides"
     description "Access to available custom imported guides"
     mime_type "text/markdown"

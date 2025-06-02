@@ -81,7 +81,8 @@ def setup_mcp_tools(server)
 
   server.register_resources(RailsMcpServer::RailsGuidesResource, RailsMcpServer::RailsGuidesResources,
     RailsMcpServer::StimulusGuidesResource, RailsMcpServer::StimulusGuidesResources, RailsMcpServer::TurboGuidesResource,
-    RailsMcpServer::TurboGuidesResources, RailsMcpServer::CustomGuidesResource, RailsMcpServer::CustomGuidesResources)
+    RailsMcpServer::TurboGuidesResources, RailsMcpServer::CustomGuidesResource, RailsMcpServer::CustomGuidesResources,
+    RailsMcpServer::KamalGuidesResource, RailsMcpServer::KamalGuidesResources)
 end
 
 case mode

@@ -1,8 +1,8 @@
 module RailsMcpServer
-  class TurboGuidesResource < BaseGuideResource
-    uri "turbo://guides/{guide_name}"
+  class TurboGuidesResource < BaseResource
+    include GuideLoaderTemplate
 
-    # Resource metadata
+    uri "turbo://guides/{guide_name}"
     resource_name "Turbo Guides"
     description "Access to specific Turbo documentation"
     mime_type "text/markdown"

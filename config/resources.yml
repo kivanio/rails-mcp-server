@@ -1,6 +1,3 @@
-# Rails Guides Download Configuration
-# This file defines which Rails guides to download from the official repository
-
 rails:
   base_url: "https://raw.githubusercontent.com/rails/rails/v8.0.2/guides/source"
   description: "Official Ruby on Rails documentation guides"
@@ -130,3 +127,77 @@ turbo:
     - reference/events.md
     - reference/frames.md
     - reference/streams.md
+
+# Kamal Deploy Documentation
+kamal:
+  base_url: "https://raw.githubusercontent.com/basecamp/kamal-site/refs/heads/main/docs"
+  description: "Kamal deployment tool documentation"
+  version: "latest"
+  files:
+    # Installation
+    - installation/index.md
+    - installation/dockerized.md
+
+    # Configuration
+    - configuration/accessories.md
+    - configuration/aliases.md
+    - configuration/anchors.md
+    - configuration/booting.md
+    - configuration/builder-examples.md
+    - configuration/builders.md
+    - configuration/cron.md
+    - configuration/docker-registry.md
+    - configuration/environment-variables.md
+    - configuration/logging.md
+    - configuration/overview.md
+    - configuration/proxy.md
+    - configuration/roles.md
+    - configuration/servers.md
+    - configuration/ssh.md
+    - configuration/sshkit.md
+
+    # Commands
+    - commands/accessory.md
+    - commands/app.md
+    - commands/audit.md
+    - commands/build.md
+    - commands/config.md
+    - commands/deploy.md
+    - commands/details.md
+    - commands/docs.md
+    - commands/help.md
+    - commands/init.md
+    - commands/lock.md
+    - commands/proxy.md
+    - commands/prune.md
+    - commands/redeploy.md
+    - commands/registry.md
+    - commands/remove.md
+    - commands/rollback.md
+    - commands/running-commands-on-servers.md
+    - commands/secrets.md
+    - commands/server.md
+    - commands/setup.md
+    - commands/upgrade.md
+    - commands/version.md
+    - commands/view-all-commands.md
+
+    # Hooks
+    - hooks/overview.md
+    - hooks/docker-setup.md
+    - hooks/post-app-boot.md
+    - hooks/post-deploy.md
+    - hooks/post-proxy-reboot.md
+    - hooks/pre-app-boot.md
+    - hooks/pre-build.md
+    - hooks/pre-connect.md
+    - hooks/pre-deploy.md
+    - hooks/pre-proxy-reboot.md
+
+    # Upgrading
+    - upgrading/configuration-changes.md
+    - upgrading/continuing-to-use-traefik.md
+    - upgrading/network-changes.md
+    - upgrading/overview.md
+    - upgrading/proxy-changes.md
+    - upgrading/secrets-changes.md

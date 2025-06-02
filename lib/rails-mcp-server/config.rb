@@ -2,7 +2,8 @@ require "logger"
 
 module RailsMcpServer
   class Config
-    attr_accessor :logger, :log_level, :projects, :current_project, :active_project_path, :config_dir
+    attr_accessor :logger, :projects, :current_project, :active_project_path, :config_dir
+    attr_reader :log_level
 
     def self.setup
       new.tap do |instance|
@@ -18,6 +19,11 @@ module RailsMcpServer
 
       configure_logger
       load_projects
+    end
+
+    def log_level=(level)
+      @log_level = LEVELS[level] || Logger::INFO
+      @logger.level = @log_level
     end
 
     private

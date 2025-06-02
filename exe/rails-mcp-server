@@ -66,10 +66,7 @@ while i < ARGV.length
   end
 end
 
-RailsMcpServer.config do |config|
-  config.log_level = log_level
-end
-
+RailsMcpServer.config.log_level = log_level
 RailsMcpServer.log(:info, "Starting Rails MCP Server in #{mode} mode...")
 
 # Create tools configuration for both modes

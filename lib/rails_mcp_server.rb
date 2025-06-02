@@ -39,7 +39,7 @@ require_relative "rails-mcp-server/resources/kamal_guides_resource"
 require_relative "rails-mcp-server/resources/kamal_guides_resources"
 
 module RailsMcpServer
-  @levels = {debug: Logger::DEBUG, info: Logger::INFO, error: Logger::ERROR}
+  LEVELS = {debug: Logger::DEBUG, info: Logger::INFO, error: Logger::ERROR}
   @config = Config.setup
 
   class << self
@@ -55,7 +55,7 @@ module RailsMcpServer
     def_delegators :@config, :config_dir
 
     def log(level, message)
-      log_level = @levels[level] || Logger::INFO
+      log_level = LEVELS[level] || Logger::INFO
 
       @config.logger.add(log_level, message)
     end

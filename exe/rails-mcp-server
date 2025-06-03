@@ -13,6 +13,9 @@ require "puma/configuration"
 require "puma/launcher"
 require_relative "../lib/rails_mcp_server"
 
+# Debug information
+puts "Extensions loaded: #{RailsMcpServer.extensions_loaded?}\n\n"
+
 if ARGV[0] == "version"
   puts "Rails MCP Server version #{RailsMcpServer::VERSION}"
   exit 0
@@ -63,17 +66,20 @@ while i < ARGV.length
   end
 end
 
-RailsMcpServer.config do |config|
-  config.log_level = log_level
-end
-
+RailsMcpServer.config.log_level = log_level
 RailsMcpServer.log(:info, "Starting Rails MCP Server in #{mode} mode...")
 
 # Create tools configuration for both modes
 def setup_mcp_tools(server)
   server.register_tools(RailsMcpServer::SwitchProject, RailsMcpServer::ProjectInfo,
     RailsMcpServer::ListFiles, RailsMcpServer::GetFile, RailsMcpServer::GetRoutes, RailsMcpServer::AnalyzeModels,
-    RailsMcpServer::GetSchema, RailsMcpServer::AnalyzeControllerViews, RailsMcpServer::AnalyzeEnvironmentConfig)
+    RailsMcpServer::GetSchema, RailsMcpServer::AnalyzeControllerViews, RailsMcpServer::AnalyzeEnvironmentConfig,
+    RailsMcpServer::LoadGuide)
+
+  server.register_resources(RailsMcpServer::RailsGuidesResource, RailsMcpServer::RailsGuidesResources,
+    RailsMcpServer::StimulusGuidesResource, RailsMcpServer::StimulusGuidesResources, RailsMcpServer::TurboGuidesResource,
+    RailsMcpServer::TurboGuidesResources, RailsMcpServer::CustomGuidesResource, RailsMcpServer::CustomGuidesResources,
+    RailsMcpServer::KamalGuidesResource, RailsMcpServer::KamalGuidesResources)
 end
 
 case mode

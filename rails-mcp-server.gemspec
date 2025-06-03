@@ -15,15 +15,17 @@ Gem::Specification.new do |spec|
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
+  spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/main/CHANGELOG.md"
 
-  spec.files = Dir.glob("{lib,exe}/**/*") + %w[LICENSE.txt README.md]
+  spec.files = Dir.glob("{lib,exe,config,docs}/**/*") + %w[LICENSE.txt README.md CHANGELOG.md]
   spec.bindir = "exe"
-  spec.executables = ["rails-mcp-server", "rails-mcp-setup-claude"]
+  spec.executables = ["rails-mcp-server", "rails-mcp-setup-claude", "rails-mcp-server-download-resources"]
   spec.require_paths = ["lib"]
 
-  spec.add_dependency "fast-mcp", "~> 1.1.0"
+  spec.add_dependency "addressable", "~> 2.8"
+  spec.add_dependency "fast-mcp", "~> 1.4.0"
   spec.add_dependency "rack", "~> 3.1.12"
   spec.add_dependency "puma", "~> 6.6.0"
-  spec.add_dependency "logger", "~> 1.6.6"
+  spec.add_dependency "logger", "~> 1.7.0"
   spec.add_development_dependency "standard"
 end

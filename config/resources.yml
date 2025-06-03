@@ -1,0 +1,203 @@
+rails:
+  base_url: "https://raw.githubusercontent.com/rails/rails/v8.0.2/guides/source"
+  description: "Official Ruby on Rails documentation guides"
+  version: "8.0.2"
+  files:
+    # Getting Started
+    - getting_started.md
+    - install_ruby_on_rails.md
+    - getting_started_with_devcontainer.md
+
+    # Core Components
+    - active_record_basics.md
+    - active_record_migrations.md
+    - active_record_validations.md
+    - active_record_callbacks.md
+    - active_record_querying.md
+    - active_record_encryption.md
+    - active_record_multiple_databases.md
+    - active_record_postgresql.md
+    - active_record_composite_primary_keys.md
+    - association_basics.md
+
+    # Action Pack
+    - action_controller_overview.md
+    - action_controller_advanced_topics.md
+    - action_view_overview.md
+    - action_view_helpers.md
+    - layouts_and_rendering.md
+    - form_helpers.md
+    - routing.md
+
+    # Other Action Components
+    - action_mailer_basics.md
+    - action_cable_overview.md
+    - action_text_overview.md
+    - action_mailbox_basics.md
+    - active_job_basics.md
+    - active_storage_overview.md
+
+    # Active Support
+    - active_support_core_extensions.md
+    - active_support_instrumentation.md
+    - active_model_basics.md
+
+    # Configuration and Setup
+    - configuring.md
+    - command_line.md
+    - asset_pipeline.md
+    - working_with_javascript_in_rails.md
+    - autoloading_and_reloading_constants.md
+    - initialization.md
+    - rails_on_rack.md
+
+    # Advanced Topics
+    - engines.md
+    - threading_and_code_execution.md
+    - api_app.md
+    - generators.md
+    - plugins.md
+    - caching_with_rails.md
+
+    # Development and Testing
+    - testing.md
+    - debugging_rails_applications.md
+    - development_dependencies_install.md
+    - error_reporting.md
+
+    # Deployment and Performance
+    - tuning_performance_for_deployment.md
+    - upgrading_ruby_on_rails.md
+
+    # Security and Internationalization
+    - security.md
+    - i18n.md
+
+    # Contributing
+    - contributing_to_ruby_on_rails.md
+    - api_documentation_guidelines.md
+    - ruby_on_rails_guides_guidelines.md
+    - maintenance_policy.md
+
+# Stimulus JavaScript Framework Documentation
+stimulus:
+  base_url: "https://raw.githubusercontent.com/hotwired/stimulus/refs/heads/main/docs"
+  description: "Stimulus JavaScript framework documentation"
+  version: "latest"
+  files:
+    # Handbook - Main Documentation
+    - handbook/00_the_origin_of_stimulus.md
+    - handbook/01_introduction.md
+    - handbook/02_hello_stimulus.md
+    - handbook/03_building_something_real.md
+    - handbook/04_designing_for_resilience.md
+    - handbook/05_managing_state.md
+    - handbook/06_working_with_external_resources.md
+    - handbook/07_installing_stimulus.md
+
+    # Reference - API Documentation
+    - reference/actions.md
+    - reference/controllers.md
+    - reference/css_classes.md
+    - reference/lifecycle_callbacks.md
+    - reference/outlets.md
+    - reference/targets.md
+    - reference/using_typescript.md
+    - reference/values.md
+
+# Turbo Hotwire Framework Documentation
+turbo:
+  base_url: "https://raw.githubusercontent.com/hotwired/turbo-site/refs/heads/main/_source"
+  description: "Turbo Hotwire framework documentation"
+  version: "latest"
+  files:
+    # Handbook - Main Documentation
+    - handbook/01_introduction.md
+    - handbook/02_drive.md
+    - handbook/03_page_refreshes.md
+    - handbook/04_frames.md
+    - handbook/05_streams.md
+    - handbook/06_native.md
+    - handbook/07_building.md
+    - handbook/08_installing.md
+
+    # Reference - API Documentation
+    - reference/attributes.md
+    - reference/drive.md
+    - reference/events.md
+    - reference/frames.md
+    - reference/streams.md
+
+# Kamal Deploy Documentation
+kamal:
+  base_url: "https://raw.githubusercontent.com/basecamp/kamal-site/refs/heads/main/docs"
+  description: "Kamal deployment tool documentation"
+  version: "latest"
+  files:
+    # Installation
+    - installation/index.md
+    - installation/dockerized.md
+
+    # Configuration
+    - configuration/accessories.md
+    - configuration/aliases.md
+    - configuration/anchors.md
+    - configuration/booting.md
+    - configuration/builder-examples.md
+    - configuration/builders.md
+    - configuration/cron.md
+    - configuration/docker-registry.md
+    - configuration/environment-variables.md
+    - configuration/logging.md
+    - configuration/overview.md
+    - configuration/proxy.md
+    - configuration/roles.md
+    - configuration/servers.md
+    - configuration/ssh.md
+    - configuration/sshkit.md
+
+    # Commands
+    - commands/accessory.md
+    - commands/app.md
+    - commands/audit.md
+    - commands/build.md
+    - commands/config.md
+    - commands/deploy.md
+    - commands/details.md
+    - commands/docs.md
+    - commands/help.md
+    - commands/init.md
+    - commands/lock.md
+    - commands/proxy.md
+    - commands/prune.md
+    - commands/redeploy.md
+    - commands/registry.md
+    - commands/remove.md
+    - commands/rollback.md
+    - commands/running-commands-on-servers.md
+    - commands/secrets.md
+    - commands/server.md
+    - commands/setup.md
+    - commands/upgrade.md
+    - commands/version.md
+    - commands/view-all-commands.md
+
+    # Hooks
+    - hooks/overview.md
+    - hooks/docker-setup.md
+    - hooks/post-app-boot.md
+    - hooks/post-deploy.md
+    - hooks/post-proxy-reboot.md
+    - hooks/pre-app-boot.md
+    - hooks/pre-build.md
+    - hooks/pre-connect.md
+    - hooks/pre-deploy.md
+    - hooks/pre-proxy-reboot.md
+
+    # Upgrading
+    - upgrading/configuration-changes.md
+    - upgrading/continuing-to-use-traefik.md
+    - upgrading/network-changes.md
+    - upgrading/overview.md
+    - upgrading/proxy-changes.md
+    - upgrading/secrets-changes.md

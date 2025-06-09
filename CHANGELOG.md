@@ -114,7 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `list_files`: Browse project files with glob pattern matching
   - `get_file`: Retrieve file contents with syntax highlighting
   - `get_routes`: Display all Rails routes (equivalent to `rails routes`)
-  - `analize_models`: Analyze Active Record models, associations, and relationships
+  - `analyze_models`: Analyze Active Record models, associations, and relationships
   - `get_schema`: Retrieve database schema information and table structures
   - Basic file and project analysis capabilities
 - **Project Management System**:

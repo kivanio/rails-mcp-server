@@ -1,6 +1,6 @@
 module RailsMcpServer
   class AnalyzeModels < BaseTool
-    tool_name "analize_models"
+    tool_name "analyze_models"
 
     description "Retrieve detailed information about Active Record models in the project. When called without parameters, lists all model files. When a specific model is specified, returns its schema, associations (has_many, belongs_to, has_one), and complete source code."
 

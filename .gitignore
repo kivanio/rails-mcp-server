@@ -1,3 +1,4 @@
 pkg/**/*
 tmp/**/*
 .DS_Store
+bin/changelog_generator.rb

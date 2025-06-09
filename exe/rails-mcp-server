@@ -13,9 +13,6 @@ require "puma/configuration"
 require "puma/launcher"
 require_relative "../lib/rails_mcp_server"
 
-# Debug information
-puts "Extensions loaded: #{RailsMcpServer.extensions_loaded?}\n\n"
-
 if ARGV[0] == "version"
   puts "Rails MCP Server version #{RailsMcpServer::VERSION}"
   exit 0

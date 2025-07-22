@@ -5,7 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 1.2.1 - 2025-06-09
+## [1.2.2] - 2025-07-21
+
+### Added
+
+- **Network Access Support**: New `--bind-all` flag for HTTP mode to allow access from local network
+  - Binds to `0.0.0.0` instead of `localhost` when enabled
+  - Allows connections from local network IP ranges (192.168.x.x, 10.x.x.x)
+  - Accepts connections from `.local` domain names (e.g., `my-computer.local`)
+  - Maintains security features with origin validation and IP filtering
+
+### Improved
+
+- **Security Configuration**: Enhanced allowed origins and IP configuration when using `--bind-all`
+  - Automatically configures appropriate security settings for local network access
+  - Preserves localhost-only mode by default for security
+  - Clear documentation of security implications
+
+### Changed
+
+- HTTP server binding address is now configurable via `--bind-all` flag
+- Updated help text to include new network access option
+
+## [1.2.1] - 2025-06-09
 
 ### Fixed
 
@@ -170,6 +192,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version History Summary
 
+- **v1.2.2** (2025-07-21): Network access support with --bind-all flag
+- **v1.2.1** (2025-06-09): Bug fixes for STDIO output and tool naming
 - **v1.2.0** (2025-06-03): Major documentation and resource system addition
 - **v1.1.4** (2025-05-02): Critical bug fixes for HTTP mode and Rails commands
 - **v1.1.0** (2025-04-20): HTTP SSE support and new analysis tools with FastMCP migration
@@ -190,9 +214,9 @@ This project follows [Semantic Versioning](https://semver.org/):
 1. Update version in `lib/rails-mcp-server/version.rb`
 2. Update this CHANGELOG.md with new features and changes
 3. Update README.md and documentation if needed
-4. Create a git tag: `git tag -a v1.2.0 -m "Release version 1.2.0"`
+4. Create a git tag: `git tag -a v1.2.2 -m "Release version 1.2.2"`
 5. Push tags: `git push origin --tags`
-6. Build and publish gem: `gem build rails-mcp-server.gemspec && gem push rails-mcp-server-1.2.0.gem`
+6. Build and publish gem: `gem build rails-mcp-server.gemspec && gem push rails-mcp-server-1.2.2.gem`
 
 ### Changelog Categories
 
